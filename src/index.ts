@@ -1,19 +1,20 @@
 import Jimp from 'jimp';
 import { httpServer } from './http_server/server';
 import robot from 'robotjs';
-import { WebSocketServer } from 'ws';
+import WebSocket, { WebSocketServer } from 'ws';
 import { mouse_up, mouse_down, mouse_left, mouse_right } from './utils/mouseMove';
 import { Action } from './types/enum';
-import { INVALID_COMMAND } from './constant/message';
+import { INVALID_COMMAND, SOCKET_CLOSE } from './constant/message';
 
 const HTTP_PORT = 3000;
 const SOCKET_PORT = 8080;
-
 const socketServer = new WebSocketServer({ port: SOCKET_PORT });
+
+const clients: Set<WebSocket> = new Set();
 
 socketServer.on('connection', (ws) => {
   console.log(`Start websocket on the ${SOCKET_PORT} port!`);
-
+  clients.add(ws);
   ws.on('message', (data) => {
     const [command, coordFirst, coordSecond] = data.toString().split(' ');
     switch (command) {
@@ -43,17 +44,18 @@ socketServer.on('connection', (ws) => {
       }
     }
     if (coordFirst) {
-      ws.send(`${command}\0`);
+      ws.send(`${command}`);
     }
   });
 });
 
 socketServer.on('close', () => {
-  console.log('server closed');
+  console.log(SOCKET_CLOSE + ` ${SOCKET_PORT} port!`);
   process.exit();
 });
 
 process.on('SIGINT', () => {
+  clients.forEach((client) => client.close());
   socketServer.close();
 });
 
