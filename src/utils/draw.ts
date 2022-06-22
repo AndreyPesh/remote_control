@@ -21,3 +21,7 @@ export const drawRectangle = (width: number, height: number) => {
   mouse_right(width);
   robot.mouseToggle('up');
 };
+
+export const drawSquare = (side: number) => {
+  drawRectangle(side, side);
+};

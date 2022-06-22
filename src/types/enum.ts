@@ -6,4 +6,5 @@ export const enum Action {
   'position' = 'mouse_position',
   'circle' = 'draw_circle',
   'rectangle' = 'draw_rectangle',
+  'square' = 'draw_square',
 }
