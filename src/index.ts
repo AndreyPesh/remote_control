@@ -5,6 +5,7 @@ import WebSocket, { WebSocketServer } from 'ws';
 import { mouse_up, mouse_down, mouse_left, mouse_right } from './utils/mouseMove';
 import { Action } from './types/enum';
 import { INVALID_COMMAND, SOCKET_CLOSE } from './constant/message';
+import { drawCircle } from './utils/draw';
 
 const HTTP_PORT = 3000;
 const SOCKET_PORT = 8080;
@@ -37,6 +38,10 @@ socketServer.on('connection', (ws) => {
       case Action.position: {
         const { x, y } = robot.getMousePos();
         ws.send(`${command} ${x},${y}`);
+        break;
+      }
+      case Action.circle: {
+        drawCircle(Number(coordFirst));
         break;
       }
       default: {
