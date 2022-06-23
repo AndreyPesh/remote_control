@@ -1,6 +1,6 @@
 import { httpServer } from './http_server/server';
 import robot from 'robotjs';
-import WebSocket, { WebSocketServer } from 'ws';
+import WebSocket, { WebSocketServer, createWebSocketStream } from 'ws';
 import { mouse_up, mouse_down, mouse_left, mouse_right } from './utils/mouseMove';
 import { Action } from './types/enum';
 import { INVALID_COMMAND, SOCKET_CLOSE } from './constant/message';
@@ -16,56 +16,62 @@ const clients: Set<WebSocket> = new Set();
 socketServer.on('connection', (ws) => {
   console.log(`Start websocket on the ${SOCKET_PORT} port!`);
   clients.add(ws);
-  ws.on('message', (data) => {
-    const [command, coordFirst, coordSecond] = data.toString().split(' ');
-    switch (command) {
-      case Action.up: {
-        mouse_up(Number(coordFirst));
-        break;
+  const duplex = createWebSocketStream(ws, { decodeStrings: false });
+
+  duplex.on('data', (data) => {
+    try {
+      const [command, coordFirst, coordSecond] = data.toString().trim().split(' ');
+      switch (command) {
+        case Action.up: {
+          mouse_up(Number(coordFirst));
+          break;
+        }
+        case Action.down: {
+          mouse_down(Number(coordFirst));
+          break;
+        }
+        case Action.left: {
+          mouse_left(Number(coordFirst));
+          break;
+        }
+        case Action.right: {
+          mouse_right(Number(coordFirst));
+          break;
+        }
+        case Action.position: {
+          const { x, y } = robot.getMousePos();
+          duplex.write(`${command} ${x},${y}`);
+          break;
+        }
+        case Action.circle: {
+          drawCircle(Number(coordFirst));
+          break;
+        }
+        case Action.rectangle: {
+          drawRectangle(Number(coordFirst), Number(coordSecond));
+          break;
+        }
+        case Action.square: {
+          drawSquare(Number(coordFirst));
+          break;
+        }
+        case Action.screen: {
+          getScreenShot()
+            .then((image) => {
+              duplex.write(`${command} ${image}`);
+            })
+            .catch((err) => console.log(err));
+          break;
+        }
+        default: {
+          console.log(INVALID_COMMAND);
+        }
       }
-      case Action.down: {
-        mouse_down(Number(coordFirst));
-        break;
+      if (coordFirst) {
+        duplex.write(`${command}`);
       }
-      case Action.left: {
-        mouse_left(Number(coordFirst));
-        break;
-      }
-      case Action.right: {
-        mouse_right(Number(coordFirst));
-        break;
-      }
-      case Action.position: {
-        const { x, y } = robot.getMousePos();
-        ws.send(`${command} ${x},${y}`);
-        break;
-      }
-      case Action.circle: {
-        drawCircle(Number(coordFirst));
-        break;
-      }
-      case Action.rectangle: {
-        drawRectangle(Number(coordFirst), Number(coordSecond));
-        break;
-      }
-      case Action.square: {
-        drawSquare(Number(coordFirst));
-        break;
-      }
-      case Action.screen: {
-        getScreenShot()
-          .then((image) => {
-            ws.send(`${command} ${image}`);
-          })
-          .catch((err) => console.log(err));
-        break;
-      }
-      default: {
-        console.log(INVALID_COMMAND);
-      }
-    }
-    if (coordFirst) {
-      ws.send(`${command}`);
+    } catch (error) {
+      console.log(error);
     }
   });
 });
