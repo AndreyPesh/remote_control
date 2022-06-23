@@ -1,4 +1,3 @@
-import Jimp from 'jimp';
 import { httpServer } from './http_server/server';
 import robot from 'robotjs';
 import WebSocket, { WebSocketServer } from 'ws';
@@ -6,6 +5,7 @@ import { mouse_up, mouse_down, mouse_left, mouse_right } from './utils/mouseMove
 import { Action } from './types/enum';
 import { INVALID_COMMAND, SOCKET_CLOSE } from './constant/message';
 import { drawCircle, drawRectangle, drawSquare } from './utils/draw';
+import { getScreenShot } from './utils/picture';
 
 const HTTP_PORT = 3000;
 const SOCKET_PORT = 8080;
@@ -50,6 +50,14 @@ socketServer.on('connection', (ws) => {
       }
       case Action.square: {
         drawSquare(Number(coordFirst));
+        break;
+      }
+      case Action.screen: {
+        getScreenShot()
+          .then((image) => {
+            ws.send(`${command} ${image}`);
+          })
+          .catch((err) => console.log(err));
         break;
       }
       default: {

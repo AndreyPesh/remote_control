@@ -7,4 +7,5 @@ export const enum Action {
   'circle' = 'draw_circle',
   'rectangle' = 'draw_rectangle',
   'square' = 'draw_square',
+  'screen' = 'prnt_scrn',
 }
